@@ -3,12 +3,15 @@
 
 import 'package:anim_search_bar/anim_search_bar.dart';
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:easy_search_bar/easy_search_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:marquee/marquee.dart';
+import 'package:text_scroll/text_scroll.dart';
 import 'package:we_listen/SignIn.dart';
 import 'package:we_listen/reusableWidget.dart';
 
@@ -21,9 +24,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List songDetails = [];
-  bool flag = true ;
-  List songDetailsGlobal  = [] , currPlaylist =[];
+  bool flag = true , playerStarted=false;
+  List songDetailsGlobal  = [] ;
+  List<Audio> currPlaylist =[];
   final assetsAudioPlayer = AssetsAudioPlayer();
+
+   Duration progress = Duration() , total =Duration() ;
+   
   
 
 
@@ -58,24 +65,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
    playMusic(object)async{
     try {
-           
-            // setState(() {
-            //    currPlaylist.add(object);
-            // });
-            await assetsAudioPlayer.open(
-                  showNotification: true,
-                  Audio.network(
+            currPlaylist.clear();
+            currPlaylist.add(Audio.network(
                   object["DownloadLink"],
                   metas: Metas(
                     title: object["Name"],
                     artist: object["Singer"],
                     album: object["Movie"]  
-                  )),
-            )
-            ;
-        } catch (t) {
-            //mp3 unreachable
-        }
+                  )),);
+            await assetsAudioPlayer.open(
+                  Playlist(
+                     audios:currPlaylist 
+                  ),
+                  showNotification: true,
+                  // Audio.network(
+                  // object["DownloadLink"],
+                  // metas: Metas(
+                  //   title: object["Name"],
+                  //   artist: object["Singer"],
+                  //   album: object["Movie"]  
+                  // )),
+            ).then((value){
+              print("not PLAYING");
+            });
+            //assetsAudioPlayer.playlistAudioFinished(){}
+            // print(assetsAudioPlayer.currentPosition.value.toString());
+            // print(assetsAudioPlayer.current.value!.audio.duration.toString());
+            // print('-----------------------------');
+            setState(() {
+                
+                playerStarted = true ;
+                
+              });
+            } catch (t) {
+              print("in PLAYER----------------------------------------------------------");
+              print(t);
+                //mp3 unreachable
+            }
       }
   
   filterSongs(String textController){
@@ -110,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
         super.initState();
         temp =  fetch_details() ;
       }
-  String userName=FirebaseAuth.instance.currentUser!=null?FirebaseAuth.instance.currentUser!.displayName.toString() : "Unkown" ;
+ // String userName=FirebaseAuth.instance.currentUser!=null?FirebaseAuth.instance.currentUser!.displayName.toString() : "Unkown" ;
   @override
   Widget build(BuildContext context) {
     
@@ -119,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar:EasySearchBar(
           showClearSearchIcon: true,
          
-          backgroundColor: Colors.teal.shade400,
+          backgroundColor:  Colors.cyan.shade100,
             title: Text(""),
             onSearch: (value) => filterSongs(value),
             searchClearIconTheme: IconThemeData(
@@ -167,17 +193,20 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           ),
          body: Container(
-          decoration: BoxDecoration(
-            gradient : LinearGradient(
-              colors: [Colors.lightBlue.shade100, Colors.lightBlue.shade200,],
-               begin: Alignment.topLeft,
-               end: Alignment.bottomRight,
-              ),
-          ),
+          color: Colors.cyan.shade50 ,
           child: FutureBuilder(
             future: temp,
             builder: (BuildContext context , AsyncSnapshot snapshot){
               if(snapshot.hasData){
+                // currPlaylist.add(
+                //   Audio.network(
+                //   songDetails[0]["DownloadLink"],
+                //   metas: Metas(
+                //     title:  songDetails[0]["Name"],
+                //     artist: songDetails[0]["Singer"],
+                //     album: songDetails[0]["Movie"]  
+                //   )),
+                // );
                 print("length"+songDetails.length.toString());
                 return Column(
                   children: [
@@ -190,37 +219,140 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
                         ),
                       ),
-                     /* Container(
-                        height: MediaQuery.of(context).size.height*0.2,
+                      playerStarted==true?
+                      Container(
+                        height: MediaQuery.of(context).size.height*0.18,
                         width: MediaQuery.of(context).size.width,
                          decoration: BoxDecoration(
+                          boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  offset: const Offset(
+                                    5.0,
+                                    5.0,
+                                  ),
+                                  blurRadius: 10.0,
+                                  spreadRadius: 2.0,
+                                ), //BoxShadow
+                                BoxShadow(
+                                  color: Colors.white,
+                                  offset: const Offset(0.0, 0.0),
+                                  blurRadius: 0.0,
+                                  spreadRadius: 0.0,
+                                ), //BoxShadow
+                              ],
+                          borderRadius: BorderRadius.circular(20),
                           gradient : LinearGradient(
-                            colors: [Colors.blueGrey , Colors.grey ,
+                            colors: [ Colors.teal.shade100,Colors.cyan.shade100 , Colors.lightBlueAccent.shade100,
                             ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
                             ),
                         ),
-                        child: Column(
+                        
+                        child: 
+                        Column(
                           children:[
-                            assetsAudioPlayer.isPlaying.value==true?
-                            IconButton(
-                              iconSize: 50,
-                              onPressed: (){
-                                 assetsAudioPlayer.pause();
-                              }, 
-                              icon: Icon(Icons.pause)):
-                            IconButton(
-                              iconSize: 70,
-                              onPressed: (){
-                                assetsAudioPlayer.play();
-                              },
-                              icon: Icon(Icons.play_arrow
-                              ),
+                            Row(
+                               children: [
+                                  // child: Text(
+                                  //   assetsAudioPlayer.getCurrentAudioTitle.toString(),
+                                  //   style: TextStyle(
+                                  //     fontSize: 20,
+                                  //   ),
+                                  // ),
+                                  
+                                  Flexible(
+                                        child: TextScroll(
+                                        assetsAudioPlayer.getCurrentAudioTitle+"  "+assetsAudioPlayer.getCurrentAudioArtist+"bhgvtfdeserfybjhbu hgftgyvhgfuygfhjvbjvnhbjhjnbjn" +
+                                        assetsAudioPlayer.getCurrentAudioAlbum ,
+                                        velocity: Velocity(pixelsPerSecond: Offset(50, 0)),
+                                        delayBefore: Duration(milliseconds: 500),
+                                        numberOfReps: 5,
+                                        pauseBetween: Duration(milliseconds: 50),
+                                        textDirection: TextDirection.rtl,
+                                        style: TextStyle(color: Colors.green),
+                                        textAlign: TextAlign.right,
+                                        selectable: true,
+                                    ),
+                                  )
+                                
+                               ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                  IconButton(
+                                    onPressed:()async{
+                                      await assetsAudioPlayer.previous();
+                                      setState(() {
+                                        
+                                      });
+                                    }, 
+                                    icon: Icon(Icons.skip_previous),
+                                    iconSize: 40,
+                                  ),
+                                  SizedBox(width: 30,),
+                                
+                                  assetsAudioPlayer.isPlaying.value==true?
+                                  IconButton(
+                                    iconSize: 40,
+                                    onPressed: ()async{
+                                      await assetsAudioPlayer.pause();
+                                      setState(() {
+                                        
+                                      });
+                                      print("in pause");
+                                    }, 
+                                    icon: Icon(Icons.pause)
+                                  ):
+                                  IconButton(
+                                    iconSize: 40,
+                                    onPressed: ()async{
+                                      print("in play");
+                                      await assetsAudioPlayer.play();
+                                      setState(() {
+                                        
+                                      });
+                                    },
+                                    icon: Icon(Icons.play_arrow
+                                    ),
+                                  ),
+                                  SizedBox(width: 30,),
+                                  IconButton(
+                                    onPressed:()async{
+                                      await assetsAudioPlayer.next();
+                                      //assetsAudioPlayer.playlistFinished ,
+                                      setState(() {
+                                        
+                                      });
+                                    }, 
+                                    icon: Icon(Icons.skip_next),
+                                    iconSize: 40,
+                                  )
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 0 , horizontal: 10 ),
+                              child: StreamBuilder(
+                                
+                              stream: assetsAudioPlayer.currentPosition,
+                              builder: (context , asyncSnapshot) {
+                                return ProgressBar(
+                                   progress: asyncSnapshot.data==null?Duration(seconds: 0):asyncSnapshot.data as Duration,
+                                   total: assetsAudioPlayer.current.value!.audio.duration,
+                                   progressBarColor: Colors.black,
+                                   thumbColor: Colors.black,
+                                   onSeek: (duration) {
+                                    assetsAudioPlayer.seek(duration);
+                                  },
+                                );
+                              }
+                                ),
                             )
                           ]
                         ),
-                      )*/
+                      ):SizedBox()
                   ],
                 );
               }

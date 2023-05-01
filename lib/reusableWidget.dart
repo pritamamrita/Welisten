@@ -20,7 +20,8 @@ class layout extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
            borderRadius: BorderRadius.circular(10),
-           color: Colors.teal.shade400.withOpacity(0.3),
+           //color: Colors.teal.shade400.withOpacity(0.3),
+           color: Colors.white
         ),
         height: MediaQuery.of(context).size.height*0.13,
         

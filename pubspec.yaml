@@ -45,6 +45,9 @@ dependencies:
   anim_search_bar: ^2.0.3
   easy_search_bar: ^2.5.0
   assets_audio_player: ^3.0.6
+  audio_video_progress_bar: ^1.0.1
+  marquee: ^2.2.3
+  text_scroll: ^0.2.0
 
 dev_dependencies:
   flutter_test:
