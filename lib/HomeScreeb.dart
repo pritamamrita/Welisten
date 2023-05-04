@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
    playMusic(object)async{
     try {
-            currPlaylist.clear();
+            //currPlaylist.clear();
             currPlaylist.add(Audio.network(
                   object["DownloadLink"],
                   metas: Metas(
@@ -73,7 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     artist: object["Singer"],
                     album: object["Movie"]  
                   )),);
-            await assetsAudioPlayer.open(
+                  print(currPlaylist.toString());                                     
+                  print("-------------------");
+             await assetsAudioPlayer.open(
                   Playlist(
                      audios:currPlaylist 
                   ),
@@ -86,23 +88,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   //   album: object["Movie"]  
                   // )),
             ).then((value){
-              print("not PLAYING");
+              
+              print("---- PLAYING");
             });
             //assetsAudioPlayer.playlistAudioFinished(){}
             // print(assetsAudioPlayer.currentPosition.value.toString());
-            // print(assetsAudioPlayer.current.value!.audio.duration.toString());
-            // print('-----------------------------');
+            // print(assetsAudioPlayer.current.value.toString());
+            //print(assetsAudioPlayer.current.value!.audio.duration.toString());
+            //print('-----------------------------');
             setState(() {
                 
                 playerStarted = true ;
                 
               });
-            } catch (t) {
+            }catch (t) {
               print("in PLAYER----------------------------------------------------------");
               print(t);
                 //mp3 unreachable
             }
       }
+
+    addToPlaylist(object){
+         currPlaylist.add(Audio.network(
+                  object["DownloadLink"],
+                  metas: Metas(
+                    title: object["Name"],
+                    artist: object["Singer"],
+                    album: object["Movie"]  
+                  )),);
+                  setState(() {
+                   
+                  });
+                  //assetsAudioPlayer.readingPlaylist;
+                  // print(currPlaylist.toString());
+                  // print("-------------------");
+    }  
   
   filterSongs(String textController){
     songDetails.clear();
@@ -144,15 +164,14 @@ class _HomeScreenState extends State<HomeScreen> {
        child: Scaffold(
         appBar:EasySearchBar(
           showClearSearchIcon: true,
-         
-          backgroundColor:  Colors.cyan.shade100,
+            backgroundColor:  Colors.cyan.shade100,
             title: Text(""),
             onSearch: (value) => filterSongs(value),
             searchClearIconTheme: IconThemeData(
               color: Colors.grey.shade900,
               size: 28
             ),
-            searchBackgroundColor: Colors.lightBlue.shade100,
+            searchBackgroundColor: Colors.indigo.shade200,
             searchBackIconTheme: IconThemeData(
                color: Colors.grey.shade900,
                size: 28 ,
@@ -210,18 +229,51 @@ class _HomeScreenState extends State<HomeScreen> {
                 print("length"+songDetails.length.toString());
                 return Column(
                   children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                         children: [
+                          TextButton(
+                            onPressed: (){
+
+                            },
+                             child: Text(
+                                "My Playlist",
+                                style: TextStyle(
+                                    fontSize: 23,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.normal,
+                                    // decoration: TextDecoration.underline,
+                                    // decorationStyle: TextDecorationStyle.wavy
+                                   ),
+                             )
+                             ),
+                             SizedBox(width: 20,),
+                             TextButton(
+                              onPressed: (){},
+                              child: Text(
+                                  "All Songs",
+                                 style: TextStyle(
+                                    fontSize: 23,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.normal,
+                                   ),
+                              )
+                             )
+                         ],
+                      ),
                       Expanded(
                         child: ListView.builder(
                         itemCount:songDetails.length ,
                         itemBuilder: (context , index){
                         return layout(
-                          Object:songDetails[index] , playMusic:playMusic)  ;
+                          Object:songDetails[index] , playMusic:playMusic ,
+                          addToPlaylist : addToPlaylist)  ;
                         }
                         ),
                       ),
                       playerStarted==true?
                       Container(
-                        height: MediaQuery.of(context).size.height*0.18,
+                        height: MediaQuery.of(context).size.height*0.19,
                         width: MediaQuery.of(context).size.width,
                          decoration: BoxDecoration(
                           boxShadow: [
@@ -234,12 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   blurRadius: 10.0,
                                   spreadRadius: 2.0,
                                 ), //BoxShadow
-                                BoxShadow(
-                                  color: Colors.white,
-                                  offset: const Offset(0.0, 0.0),
-                                  blurRadius: 0.0,
-                                  spreadRadius: 0.0,
-                                ), //BoxShadow
+                                 //BoxShadow
                               ],
                           borderRadius: BorderRadius.circular(20),
                           gradient : LinearGradient(
@@ -263,18 +310,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                   // ),
                                   
                                   Flexible(
-                                        child: TextScroll(
-                                        assetsAudioPlayer.getCurrentAudioTitle+"  "+assetsAudioPlayer.getCurrentAudioArtist+"bhgvtfdeserfybjhbu hgftgyvhgfuygfhjvbjvnhbjhjnbjn" +
-                                        assetsAudioPlayer.getCurrentAudioAlbum ,
-                                        velocity: Velocity(pixelsPerSecond: Offset(50, 0)),
-                                        delayBefore: Duration(milliseconds: 500),
-                                        numberOfReps: 5,
-                                        pauseBetween: Duration(milliseconds: 50),
-                                        textDirection: TextDirection.rtl,
-                                        style: TextStyle(color: Colors.green),
-                                        textAlign: TextAlign.right,
-                                        selectable: true,
-                                    ),
+                                        flex: 1,
+                                        fit: FlexFit.loose,
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 2 , vertical: MediaQuery.of(context).size.height*0.02
+                                          ),
+                                          child: TextScroll(
+                                                                              
+                                          assetsAudioPlayer.getCurrentAudioTitle+"  |  "+assetsAudioPlayer.getCurrentAudioArtist+"  |  " +
+                                          assetsAudioPlayer.getCurrentAudioAlbum + "  |  ",
+                                          velocity: Velocity(pixelsPerSecond: Offset(50, 0)),
+                                          delayBefore: Duration(milliseconds: 500),
+                                          
+                                          pauseBetween: Duration(milliseconds: 50),
+                                          textDirection: TextDirection.ltr,
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: MediaQuery.of(context).size.height*0.026,
+                                            letterSpacing: 0.8,
+                                            wordSpacing: 1,
+                                            ),
+                                          textAlign: TextAlign.right,
+                                          selectable: true,
+                                                                            ),
+                                        ),
                                   )
                                 
                                ],
@@ -335,12 +394,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 0 , horizontal: 10 ),
                               child: StreamBuilder(
-                                
                               stream: assetsAudioPlayer.currentPosition,
                               builder: (context , asyncSnapshot) {
                                 return ProgressBar(
                                    progress: asyncSnapshot.data==null?Duration(seconds: 0):asyncSnapshot.data as Duration,
-                                   total: assetsAudioPlayer.current.value!.audio.duration,
+                                   total: assetsAudioPlayer.current.value==null?Duration(seconds: 0):assetsAudioPlayer.current.value!.audio.duration,
                                    progressBarColor: Colors.black,
                                    thumbColor: Colors.black,
                                    onSeek: (duration) {
@@ -348,7 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   },
                                 );
                               }
-                                ),
+                              ),
                             )
                           ]
                         ),
@@ -364,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
             }
           ),
         ),
-         ),
+      ),
      );
   }
 }

@@ -8,9 +8,9 @@ import 'package:we_listen/musicPlay.dart';
 
 class layout extends StatelessWidget { 
   var Object ;
-  Function playMusic ;
+  Function playMusic , addToPlaylist ;
    layout({required this.Object ,
-   required this.playMusic
+   required this.playMusic , required this.addToPlaylist
    });
   
   @override
@@ -59,6 +59,13 @@ class layout extends StatelessWidget {
               ),
               leading: Icon(Icons.audiotrack , size: 20,
               ),
+              trailing: IconButton(
+                onPressed: (){
+                  addToPlaylist(Object);
+                },
+                icon: Icon(Icons.post_add_rounded)
+                
+                ),
             ),
           ],
         ),
