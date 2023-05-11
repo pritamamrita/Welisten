@@ -23,15 +23,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List songDetails = [];
+  List songDetails = [] , myPlaylist=[] , songid=[];
   bool flag = true , playerStarted=false;
   List songDetailsGlobal  = [] ;
   List<Audio> currPlaylist =[];
   final assetsAudioPlayer = AssetsAudioPlayer();
-
-   Duration progress = Duration() , total =Duration() ;
-   
-  
+  Duration progress = Duration() , total =Duration() ;
+  FirebaseAuth auth = FirebaseAuth.instance ;
 
 
   Future<dynamic> fetch_details() async{
@@ -53,20 +51,83 @@ class _HomeScreenState extends State<HomeScreen> {
               genre += y.key.toString()+"/" ;
       }
       object["genre"] = genre ;
+      object["songid"] = x.key.toString();
       songDetailsGlobal.add(object) ;
+      print(object.toString());
      }
      songDetails.clear();
      print("in loop COUNT");
+    
      songDetails.addAll(songDetailsGlobal) ;
-      return songDetails ;
+      
+    
+    return songDetails ;
     
   }
-  
+
+
+
+  showPlaylist()async{
+          myPlaylist.clear();
+          songid.clear();
+           print('00::::::::::::::::::::::::::::::');
+           String userId = auth.currentUser!.uid.toString();
+           DatabaseReference ref = FirebaseDatabase.instance.ref('user_auth/$userId') ;
+            Stream<DatabaseEvent> stream = ref.onValue ;
+            await stream.listen((event) {
+              print('11::::::::::::::::::::::::::::::');
+              DataSnapshot snapshot = event.snapshot ;
+              for(DataSnapshot y in snapshot.child("playlist").children){
+                songid.add(y.key.toString()) ;
+              }
+            });
+            DatabaseReference songRef = FirebaseDatabase.instance.ref('songs');
+            Stream<DatabaseEvent> streamSong = songRef.onValue ;
+            await streamSong.listen((songsevent) {
+              print('22::::::::::::::::::::::::::::::');
+              DataSnapshot songs = songsevent.snapshot ;
+             //print(songs.value);
+              for(int i=0 ; i<songid.length ; i++){
+                final x = songs.child(songid[i]);
+                var object ={};
+                object["DownloadLink"] = x.child("DownloadLink").value ;
+                object["Movie"] = x.child("Movie").value ;
+                object["Name"] = x.child("Name").value ;
+                object["Singer"] = x.child("Singer").value ;
+                String genre = "";
+                for(DataSnapshot y in x.child("Genre").children){
+                        genre += y.key.toString()+"/" ;
+                }
+                object["genre"] = genre ;
+                object["songid"] = x.key.toString();
+                myPlaylist.add(object);
+                          
+              }
+              songDetails.clear();
+              songDetails.addAll(myPlaylist);
+              print(songDetails.length) ;
+              print(myPlaylist.length);
+              setState(() {
+                
+              });
+           });
+    }
+
+   
+
+  showAllSong(){
+    songDetails.clear() ;
+    songDetails.addAll(songDetailsGlobal);
+    setState(() {
+      
+    });
+  }
+
 
    playMusic(object)async{
     try {
             //currPlaylist.clear();
-            currPlaylist.add(Audio.network(
+            currPlaylist.insert(0,Audio.network(
                   object["DownloadLink"],
                   metas: Metas(
                     title: object["Name"],
@@ -108,22 +169,32 @@ class _HomeScreenState extends State<HomeScreen> {
             }
       }
 
-    addToPlaylist(object){
-         currPlaylist.add(Audio.network(
-                  object["DownloadLink"],
-                  metas: Metas(
-                    title: object["Name"],
-                    artist: object["Singer"],
-                    album: object["Movie"]  
-                  )),);
-                  setState(() {
-                   
-                  });
-                  //assetsAudioPlayer.readingPlaylist;
-                  // print(currPlaylist.toString());
-                  // print("-------------------");
+    addToPlaylist(object) async{
+        //  currPlaylist.add(Audio.network(
+        //           object["DownloadLink"],
+        //           metas: Metas(
+        //             title: object["Name"],
+        //             artist: object["Singer"],
+        //             album: object["Movie"]  
+        //           )),);
+        String userId = auth.currentUser!.uid.toString();
+        String songid = object["songid"];
+         DatabaseReference userdetail = FirebaseDatabase.instance.ref('user_auth/$userId/playlist') ;
+            final snapshot = await userdetail.get();
+            userdetail.update({
+            object["songid"] :true
+        });
+        setState(() {
+        
+        });
+        //assetsAudioPlayer.readingPlaylist;
+        // print(currPlaylist.toString());
+        print("-------------------");
+        print(object["songid"]);
     }  
   
+
+
   filterSongs(String textController){
     songDetails.clear();
     //songDetailsGlobal.clear();
@@ -150,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
       
     });
   }
-   late Future<dynamic> temp  ;
+  late Future<dynamic> temp  ;
   @override
       void initState() {
         super.initState();
@@ -171,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.grey.shade900,
               size: 28
             ),
-            searchBackgroundColor: Colors.indigo.shade200,
+            searchBackgroundColor: Colors.lightBlue.shade50,
             searchBackIconTheme: IconThemeData(
                color: Colors.grey.shade900,
                size: 28 ,
@@ -234,7 +305,8 @@ class _HomeScreenState extends State<HomeScreen> {
                          children: [
                           TextButton(
                             onPressed: (){
-
+                              print('here it goesssssssssssssssssssssss');
+                                 showPlaylist();
                             },
                              child: Text(
                                 "My Playlist",
@@ -249,7 +321,9 @@ class _HomeScreenState extends State<HomeScreen> {
                              ),
                              SizedBox(width: 20,),
                              TextButton(
-                              onPressed: (){},
+                              onPressed: (){
+                                showAllSong();
+                              },
                               child: Text(
                                   "All Songs",
                                  style: TextStyle(

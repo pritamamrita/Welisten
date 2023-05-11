@@ -20,6 +20,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController _emailTextController = TextEditingController();
   TextEditingController _userNameTextController = TextEditingController();
   TextEditingController NameTextController = TextEditingController();
+   FirebaseAuth auth = FirebaseAuth.instance ;
   
   
   @override
@@ -54,31 +55,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           child: Center(
             child: Column(
               children: [
-                SizedBox(height: 50.0),
-                TextField(
-                    controller: _userNameTextController,
-                    enableSuggestions: true,
-                    autocorrect: true,
-                    cursorColor: Colors.white,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9) 
-                    ),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon( Icons.person_2_outlined , color: Colors.white,),
-                      labelText: "Enter username " ,
-                       labelStyle: TextStyle(
-                      color: Colors.white.withOpacity(0.9)
-                    ),
-                    filled: true,
-                    floatingLabelBehavior: FloatingLabelBehavior.never,
-                    fillColor: Colors.white.withOpacity(0.3),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                      borderSide: BorderSide(width:0 ,style:BorderStyle.none)
-                    )
-                    ),
-                  ),
-                   SizedBox(height: 30.0),
+                SizedBox(height: 30.0),
                 TextField(
                     controller: NameTextController,
                     enableSuggestions: true,
@@ -161,8 +138,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   child: ElevatedButton(
                     onPressed: () async{
-                      String name = _userNameTextController.text ;
-                      if(_userNameTextController.text== "" || NameTextController.text== ""){
+                      if(NameTextController.text== ""){
                            Fluttertoast.showToast(
                                       msg: "username or Name cannot be empty",
                                       toastLength: Toast.LENGTH_LONG,
@@ -174,14 +150,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   );
                       }
                       else{
-                        DatabaseReference username = await FirebaseDatabase.instance.ref('user_auth/$name') ;
-                        final snapshot = await username.get();
-                          if(!snapshot.exists){
-                                username.set({
-                                  "email_id" : _emailTextController.text ,
-                                  "name" : NameTextController.text,
-                             });
-                            FirebaseAuth.instance.createUserWithEmailAndPassword(
+                                await auth.createUserWithEmailAndPassword(
                                 email: _emailTextController.text,
                                 password: passwordTextController.text).then((value){
                                 Navigator.push(context,
@@ -199,20 +168,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         fontSize: 16.0
                                     );
                                 });
+                                  String userId = auth.currentUser!.uid.toString();
+                                  DatabaseReference username = FirebaseDatabase.instance.ref('user_auth/$userId') ;
+                                  final snapshot = await username.get();
+                                
+                                 username.set({
+                                  
+                                  "email_id" : _emailTextController.text ,
+                                  "name" : NameTextController.text,
+                             });
+                            
                           }
-                          else{
-                            Fluttertoast.showToast(
-                                        msg: "username already exists!",
-                                        toastLength: Toast.LENGTH_LONG,
-                                        gravity: ToastGravity.CENTER,
-                                        timeInSecForIosWeb: 5,
-                                        backgroundColor: Colors.white.withOpacity(0.6),
-                                        textColor: Colors.black,
-                                        fontSize: 16.0
-                                    );
-                          }
+                          
                         
-                      }
+                  
                     },
                     child: Text(
                       "SIGN UP" ,
