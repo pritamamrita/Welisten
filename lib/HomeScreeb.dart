@@ -24,7 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List songDetails = [] , myPlaylist=[] , songid=[];
-  bool flag = true , playerStarted=false;
+  bool flag = true , playerStarted=false , isMyPlaylist=false;
   List songDetailsGlobal  = [] ;
   List<Audio> currPlaylist =[];
   final assetsAudioPlayer = AssetsAudioPlayer();
@@ -65,28 +65,22 @@ class _HomeScreenState extends State<HomeScreen> {
     
   }
 
-
-
-  showPlaylist()async{
+showPlaylist()async{
           myPlaylist.clear();
           songid.clear();
+          songDetails.clear();
            print('00::::::::::::::::::::::::::::::');
            String userId = auth.currentUser!.uid.toString();
            DatabaseReference ref = FirebaseDatabase.instance.ref('user_auth/$userId') ;
-            Stream<DatabaseEvent> stream = ref.onValue ;
-            await stream.listen((event) {
               print('11::::::::::::::::::::::::::::::');
-              DataSnapshot snapshot = event.snapshot ;
-              for(DataSnapshot y in snapshot.child("playlist").children){
+              DataSnapshot snapshot = await ref.get() ;
+               for(DataSnapshot y in snapshot.child("playlist").children){
                 songid.add(y.key.toString()) ;
               }
-            });
             DatabaseReference songRef = FirebaseDatabase.instance.ref('songs');
-            Stream<DatabaseEvent> streamSong = songRef.onValue ;
-            await streamSong.listen((songsevent) {
               print('22::::::::::::::::::::::::::::::');
-              DataSnapshot songs = songsevent.snapshot ;
-             //print(songs.value);
+
+               DataSnapshot songs= await songRef.get() ;
               for(int i=0 ; i<songid.length ; i++){
                 final x = songs.child(songid[i]);
                 var object ={};
@@ -103,14 +97,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 myPlaylist.add(object);
                           
               }
-              songDetails.clear();
               songDetails.addAll(myPlaylist);
               print(songDetails.length) ;
               print(myPlaylist.length);
               setState(() {
                 
               });
-           });
+           
     }
 
    
@@ -121,6 +114,18 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       
     });
+  }
+
+  deleteFromPlaylist(id) async{
+    String userId = auth.currentUser!.uid.toString();
+    DatabaseReference userdetail = FirebaseDatabase.instance.ref('user_auth/$userId/playlist') ;
+            final snapshot = await userdetail.get();
+            userdetail.update({
+            id : null 
+        });
+        await showPlaylist();
+       
+         
   }
 
 
@@ -138,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   print("-------------------");
              await assetsAudioPlayer.open(
                   Playlist(
-                     audios:currPlaylist 
+                     audios:currPlaylist  
                   ),
                   showNotification: true,
                   // Audio.network(
@@ -307,6 +312,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             onPressed: (){
                               print('here it goesssssssssssssssssssssss');
                                  showPlaylist();
+                                 setState(() {
+                                   isMyPlaylist=true ;
+                                 });
+                                 
                             },
                              child: Text(
                                 "My Playlist",
@@ -323,6 +332,9 @@ class _HomeScreenState extends State<HomeScreen> {
                              TextButton(
                               onPressed: (){
                                 showAllSong();
+                                setState(() {
+                                  isMyPlaylist = false ;
+                                });
                               },
                               child: Text(
                                   "All Songs",
@@ -341,13 +353,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemBuilder: (context , index){
                         return layout(
                           Object:songDetails[index] , playMusic:playMusic ,
-                          addToPlaylist : addToPlaylist)  ;
+                          addToPlaylist : addToPlaylist , isMyPlaylist:isMyPlaylist,
+                          deleteFromPlaylist:deleteFromPlaylist)  ;
                         }
                         ),
                       ),
                       playerStarted==true?
                       Container(
-                        height: MediaQuery.of(context).size.height*0.19,
+                        //height: MediaQuery.of(context).size.height*0.19,
                         width: MediaQuery.of(context).size.width,
                          decoration: BoxDecoration(
                           boxShadow: [
